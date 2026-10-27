@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1d36">
+<title>שעון נוכחות</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="שעון נוכחות">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <section id="tab-shifts" class="tab">
+    <header class="month">
+      <!-- RTL mirrors ‹ ›, so ‹ shows as a right-pointing arrow here -->
+      <button id="prev" aria-label="חודש קודם">‹</button>
+      <div><h1 id="month-title"></h1><div id="month-range" class="sm"></div></div>
+      <button id="next" aria-label="חודש הבא">›</button>
+    </header>
+    <div class="toolbar"><button id="share-open">שיתוף</button><button id="add" aria-label="הוספה">+</button></div>
+    <ul id="list"></ul>
+  </section>
+
+  <section id="tab-now" class="tab">
+    <div class="clock"><div id="timer">--:--:--</div><div id="since" class="sm"></div></div>
+    <div id="now-info" class="card center"></div>
+    <label id="nobreak-wrap" class="card center"><input type="checkbox" id="now-nobreak"> בלי הפסקה במשמרת הזו</label>
+    <button id="punch" class="punch"><span id="punch-label"></span></button>
+    <div class="sm center">לחיצה ארוכה</div>
+  </section>
+
+  <section id="tab-settings" class="tab">
+    <h1>הגדרות</h1>
+    <div class="card">
+      <label>שכר לשעה (₪)<input type="number" inputmode="decimal" data-k="rate"></label>
+      <label>שיטת חישוב<select data-k="mode"><option value="shift">משמרת שלמה לפי הסוג</option><option value="hourly">שעה-שעה לפי החלון</option></select></label>
+      <label>הפסקה בכל משמרת (דקות)<input type="number" data-k="breakMin"></label>
+      <label>חודש שכר מתחיל ביום<input type="number" min="1" max="28" data-k="monthStart"></label>
+    </div>
+    <h2>סוגי משמרות</h2>
+    <ul id="types"></ul>
+    <button id="type-add" class="wide">+ סוג משמרת</button>
+    <h2>שעות נוספות</h2>
+    <div class="card">
+      <p class="sm">האחוזים מוכפלים באחוז של סוג המשמרת. למשל ערב 125% × 125%.</p>
+      <label>שעות נוספות מתחילות אחרי (שעות נטו)<input type="number" step="0.5" data-k="otAfter"></label>
+      <label>כמה שעות נוספות ראשונות בתעריף א'<input type="number" step="0.5" data-k="ot1Hours"></label>
+      <label>תעריף א' (%)<input type="number" data-k="ot1Pct"></label>
+      <label>תעריף ב' — כל שעה נוספת אחרי זה (%)<input type="number" data-k="ot2Pct"></label>
+    </div>
+    <h2>נסיעות</h2>
+    <div class="card">
+      <label>סכום (₪)<input type="number" data-k="travel.amount"></label>
+      <label>לפי<select data-k="travel.per"><option value="month">חודש</option><option value="day">יום עבודה</option></select></label>
+    </div>
+    <h2>מחלה וחופש</h2>
+    <div class="card">
+      <label>יום מחלה ראשון (%)<input type="number" data-k="sick.0"></label>
+      <label>ימים 2–3 (%)<input type="number" data-k="sick.1"></label>
+      <label>מהיום הרביעי (%)<input type="number" data-k="sick.2"></label>
+      <label>שעות ליום מחלה/חופש<input type="number" step="0.5" data-k="dayHours"></label>
+      <label>אחוז למשמרת בחג / שבת (מסמנים במשמרת)<input type="number" data-k="holidayPct"></label>
+    </div>
+    <h2>גיבוי</h2>
+    <div class="card">
+      <p class="sm">כל המידע שמור רק בטלפון הזה. מחיקת האפליקציה מוחקת אותו, אז כדאי לגבות מדי פעם.</p>
+      <button id="backup" class="wide">שמירת גיבוי לקובץ</button>
+      <label class="wide btnlike">שחזור מקובץ<input type="file" id="restore" accept=".json,application/json" hidden></label>
+    </div>
+  </section>
+
+  <section id="tab-general" class="tab">
+    <h1>כללי</h1>
+    <ul class="rows">
+      <li id="g-feedback"><button>✉️ הצעות ודיווח על באגים</button></li>
+      <li><button id="g-share">📤 שיתוף האפליקציה</button></li>
+      <li><button disabled>⭐ דרגו אותנו<span class="sm"> · בקרוב, כשהאפליקציה תעלה לחנות</span></button></li>
+    </ul>
+    <p class="sm">גרסה 1.0</p>
+  </section>
+</main>
+
+<div id="summary" class="sheet">
+  <button id="summary-toggle" class="sheet-head"><span id="sum-hours"></span><span>︿</span><span id="sum-total"></span></button>
+  <div id="summary-body"></div>
+</div>
+
+<nav>
+  <button data-tab="shifts">📋<br>משמרות</button>
+  <button data-tab="now">◉<br>עכשיו</button>
+  <button data-tab="settings">💼<br>הגדרות</button>
+  <button data-tab="general">ⓘ<br>כללי</button>
+</nav>
+
+<dialog id="edit">
+  <form method="dialog">
+    <h2 id="edit-title">משמרת</h2>
+    <label>סוג רשומה<select name="kind"><option value="shift">משמרת</option><option value="sick">יום מחלה</option><option value="vacation">יום חופש</option></select></label>
+    <label>תאריך<input type="date" name="date" required></label>
+    <div class="only-shift">
+      <label>כניסה<input class="hm" name="in" inputmode="numeric" placeholder="00:00" maxlength="5" pattern="([01]\d|2[0-3]):[0-5]\d"></label>
+      <label>יציאה<input class="hm" name="out" inputmode="numeric" placeholder="00:00" maxlength="5" pattern="([01]\d|2[0-3]):[0-5]\d"></label>
+      <label>סוג משמרת<select name="typeId"></select></label>
+      <label class="row"><input type="checkbox" name="noBreak"> בלי הפסקה</label>
+      <label class="row"><input type="checkbox" name="holiday"> עבודה בחג / שבת</label>
+      <label>אחוז ידני (ריק = לפי הסוג)<input type="number" name="pct"></label>
+      <label>שכר לשעה ידני (ריק = מההגדרות)<input type="number" name="rate"></label>
+      <label>תוספת / טיפים (₪)<input type="number" name="extra"></label>
+    </div>
+    <label>הערות<textarea name="note" rows="2"></textarea></label>
+    <div id="edit-pay" class="center"></div>
+    <div class="actions"><button value="save" class="primary">שמירה</button><button value="cancel" formnovalidate>ביטול</button><button type="button" id="edit-delete" class="danger">מחיקה</button></div>
+  </form>
+</dialog>
+
+<dialog id="type-edit">
+  <form method="dialog">
+    <h2>סוג משמרת</h2>
+    <label>שם<input name="name" required></label>
+    <label>משעה<input class="hm" name="from" required inputmode="numeric" placeholder="00:00" maxlength="5" pattern="([01]\d|2[0-3]):[0-5]\d"></label>
+    <label>עד שעה<input class="hm" name="to" required inputmode="numeric" placeholder="00:00" maxlength="5" pattern="([01]\d|2[0-3]):[0-5]\d"></label>
+    <div class="days" id="type-days"></div>
+    <label>אחוז<input type="number" name="pct" required></label>
+    <div class="actions"><button value="save" class="primary">שמירה</button><button value="cancel" formnovalidate>ביטול</button><button type="button" id="type-delete" class="danger">מחיקה</button></div>
+  </form>
+</dialog>
+
+<dialog id="share">
+  <form method="dialog">
+    <h2>שיתוף החודש</h2>
+    <label class="row"><input type="checkbox" name="hours" checked> שעות עבודה</label>
+    <label class="row"><input type="checkbox" name="pay" checked> שכר</label>
+    <label class="row"><input type="checkbox" name="notes"> הערות</label>
+    <label class="row"><input type="checkbox" name="bonus" checked> בונוסים ופרמיות</label>
+    <pre id="share-preview"></pre>
+    <div class="actions"><button type="button" id="share-send" class="primary">שתף…</button><button value="cancel">סגירה</button></div>
+  </form>
+</dialog>
+
+<dialog id="ask">
+  <form method="dialog">
+    <p id="ask-text"></p>
+    <div class="actions"><button type="button" value="yes" class="primary">כן</button><button type="button" value="no">ביטול</button></div>
+  </form>
+</dialog>
+
+<div id="toast" role="status"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

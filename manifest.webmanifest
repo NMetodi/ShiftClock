@@ -1,0 +1,15 @@
+{
+  "name": "שעון נוכחות",
+  "short_name": "שעון נוכחות",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1b1d36",
+  "theme_color": "#1b1d36",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
